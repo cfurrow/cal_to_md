@@ -18,6 +18,10 @@ Example Output:
 - `03:00 PM - 03:30 PM` [[2021-11-21 - 1-1 with Jeff]]
 ```
 
+## TODO
+- How to make asking for permissions easier for new users.
+
+
 ## Thanks to [rnorth](https://gist.github.com/rnorth)
 This script was inspired by their gist: https://gist.github.com/rnorth/040d0395036d8066740da321e830d666
 
