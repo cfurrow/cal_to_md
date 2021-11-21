@@ -1,12 +1,11 @@
 #!/usr/bin/swift
 // inspired by: https://gist.github.com/rnorth/040d0395036d8066740da321e830d666
 //
-// agenda: exports today's calendar entries from Mac Calendar.app into a markdown file to enable note-taking
+// cal_to_md.swift: exports today's calendar entries from Mac Calendar.app into a markdown file to enable note-taking
 // 
 // Example usage:
-//   agenda > agenda-$(date +%Y-%m-%d).md
+//   ./cal_to_md.swift > agenda-$(date +%Y-%m-%d).md
 // 
-
 
 import EventKit
 
@@ -22,12 +21,14 @@ func buildDateFormatter() -> DateFormatter {
   dateFormatter.dateFormat = "yyyy-MM-dd"
   return dateFormatter;
 }
+
 func buildTimeFormatter() -> DateFormatter {
   let timeFormatter = DateFormatter()
   timeFormatter.dateFormat = "hh:mm aa"
   return timeFormatter;
 }
 
+// TODO: how can we give a more helpful message here? What can a user do to fix this?
 func handleDenied() {
   print("No access to calendars")
 }
@@ -57,6 +58,10 @@ func handleAuthorized(store:EKEventStore, semaphore:DispatchSemaphore) {
   })
 }
 
+// Remove some common characters from the event description to allow for file creation.
+// For example, if an event title is "1:1 Carl<>Frank" the sanitizer will remove ':', '<' and '>'
+// and the output will be "11 CarlFrank", and this is a valid filename that can be created
+// for the event in an app like Obsidian, etc.
 func sanitizeEventTitle(event:EKEvent) -> String {
   return event.title!
       .replacingOccurrences(of: "FW: ", with: "")
@@ -68,6 +73,8 @@ func sanitizeEventTitle(event:EKEvent) -> String {
       .replacingOccurrences(of: "/", with: "-")
 }
 
+// Fetch all of today's events, return as an array of events.
+// TODO: we could attempt to de-duplicate at this point.
 func collectEvents(store:EKEventStore) -> [EKEvent] {
   var calendar = Calendar.current
   calendar.timeZone = NSTimeZone.local
@@ -96,9 +103,8 @@ func buildEventDescription(event:EKEvent) -> String {
   let start = timeFormatter.string(from: event.startDate)
   let end = timeFormatter.string(from: event.endDate)
   let title = sanitizeEventTitle(event: event)
-  let eventDescription = "- `\(start) - \(end)` [[\(date) - \(title)]]"
-
-  return eventDescription;
+  
+  return "- `\(start) - \(end)` [[\(date) - \(title)]]"
 }
 
 switch EKEventStore.authorizationStatus(for: .event) {
@@ -118,7 +124,7 @@ switch EKEventStore.authorizationStatus(for: .event) {
     })
     break
   default:
-    print("default")
+    print("Unknown state. Could not retrieve calendar information")
     break
 }
 
