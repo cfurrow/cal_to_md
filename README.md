@@ -7,7 +7,10 @@ My primary use case is to output this list once a day and put them in my markdow
 
 ```shell
 ./cal_to_md.swift
+```
 
+Example Output:
+```markdown
 - `12:00 AM - 12:00 AM` [[2021-11-21 - Amy Frank's 30th Birthday]]
 - `08:00 AM - 09:15 AM` [[2021-11-21 - Finance call]]
 - `12:00 PM - 01:00 AM` [[2021-11-21 - Lunch]]
