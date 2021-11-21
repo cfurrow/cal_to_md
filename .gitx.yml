@@ -1,0 +1,18 @@
+---
+
+base_branch: main
+
+aggregate_branches:
+  - main
+
+reserved_branches:
+  - HEAD
+  - main
+
+taggable_branches:
+  - main
+
+# do nothing after release (e.g. do not build staging. there is no staging)
+after_release:
+  - echo "🎉 Released! 🎉"
+
