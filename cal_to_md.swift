@@ -8,8 +8,10 @@
 // 
 
 import EventKit
+import Foundation
 
 let semaphore = DispatchSemaphore(value: 1)
+
 defer {
   semaphore.wait()
 }
@@ -97,6 +99,8 @@ func printTodaysDate() {
 }
 
 func buildEventDescription(event:EKEvent) -> String {
+  let surroundEventNameWithWikiLink = ProcessInfo.processInfo.environment["WIKI_LINK"]
+
   let dateFormatter = buildDateFormatter()
   let timeFormatter = buildTimeFormatter()
   let date = dateFormatter.string(from: event.startDate)
@@ -104,7 +108,12 @@ func buildEventDescription(event:EKEvent) -> String {
   let end = timeFormatter.string(from: event.endDate)
   let title = sanitizeEventTitle(event: event)
   
-  return "- `\(start) - \(end)` [[\(date) - \(title)]]"
+  var eventName = "\(date) - \(title)"
+  if(surroundEventNameWithWikiLink?.lowercased() == "true") {
+    eventName = "[[\(eventName)]]"
+  }
+
+  return "- `\(start) - \(end)` \(eventName)"
 }
 
 switch EKEventStore.authorizationStatus(for: .event) {
