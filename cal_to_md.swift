@@ -42,6 +42,10 @@ func handleAuthorized(store:EKEventStore, semaphore:DispatchSemaphore) {
     
     // printTodaysDate()
     
+    if events.count == 0 {
+      print("No events today")
+    } 
+
     for event in events {
       if (event.status == EKEventStatus.canceled) {
         continue
