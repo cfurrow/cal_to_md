@@ -36,11 +36,10 @@ Added WIKI_LINK environment variable
 ## v1.1.0
 Created alfred workflow
 
-## TODO
+# TODO
 - How to make asking for permissions easier for new users.
 
-
-## Thanks to [rnorth](https://gist.github.com/rnorth)
+# Thanks to [rnorth](https://gist.github.com/rnorth)
 This script was inspired by their gist: https://gist.github.com/rnorth/040d0395036d8066740da321e830d666
 
 calendar.png from [commons.wikimedia.org](https://commons.wikimedia.org/wiki/File:Calendar_vmc2015.png)
