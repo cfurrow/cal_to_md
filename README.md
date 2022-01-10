@@ -18,6 +18,24 @@ Example Output:
 - `03:00 PM - 03:30 PM` [[2021-11-21 - 1-1 with Jeff]]
 ```
 
+
+
+# Alfred Workflow Configuration
+WIKI_LINK [true|false] - Surround event names in wikilink-style [[ and ]]
+
+# Changes
+## v1.3.0
+Add alfred build script
+
+## v1.2.1
+Output a message when no events found for the current day.
+
+## v1.2.0
+Added WIKI_LINK environment variable
+
+## v1.1.0
+Created alfred workflow
+
 ## TODO
 - How to make asking for permissions easier for new users.
 
