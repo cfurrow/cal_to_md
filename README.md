@@ -31,6 +31,15 @@ This script was inspired by their gist: https://gist.github.com/rnorth/040d03950
 
 calendar.png from [commons.wikimedia.org](https://commons.wikimedia.org/wiki/File:Calendar_vmc2015.png)
 
+# Contribute
+1. Fork the repository
+2. Create a new branch
+3. Make your changes
+4. Commit all your changes to your branch
+5. Create a Pull Request against this repo
+  1. Be sure to explain the changes you've made, and why you've made them.
+  2. You can tag me in the PR description
+
 # Changes
 ## v1.3.0
 Add alfred build script
