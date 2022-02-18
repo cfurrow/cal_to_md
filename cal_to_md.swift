@@ -163,8 +163,10 @@ func handleAuthorized(store:EKEventStore, semaphore:DispatchSemaphore) {
     if eventsSet.count == 0 {
       print("No events today")
     } else {
-      let formatter = GanttFormatter(events: Array(eventsSet))
-      print(formatter.build())
+      let ganttFormatter = GanttFormatter(events: Array(eventsSet))
+      print(ganttFormatter.build())
+      let listFormatter = ListFormatter(events: Array(eventsSet))
+      print(listFormatter.build())
     }
 
     semaphore.signal()
