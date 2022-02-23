@@ -160,8 +160,12 @@ class GanttFormatter : BaseFormatter {
 }
 
 // TODO: how can we give a more helpful message here? What can a user do to fix this?
-func handleDenied() {
-  print("No access to calendars")
+func handleDenied(error: Error?) {
+  print("No access to calendars.")
+  if error != nil {
+    print(error!.localizedDescription)
+  }
+  exit(1);
 }
 
 func handleAuthorized(store:EKEventStore, semaphore:DispatchSemaphore) {
@@ -207,21 +211,26 @@ func collectEvents(store:EKEventStore) -> [EKEvent] {
   return store.events(matching: predicate)
 }
 
+func requestCalendarAccess(store: EKEventStore) {
+  print("Requesting access....")
+  store.requestAccess(to: .event, completion: { (granted, error) in
+    if granted {
+      handleAuthorized(store: store, semaphore: semaphore)
+    } else {
+      handleDenied(error: error)
+    }
+  })
+}
+
 switch EKEventStore.authorizationStatus(for: .event) {
   case .authorized:
     handleAuthorized(store: store, semaphore: semaphore)
     break
   case .denied:
-    handleDenied()
+    handleDenied(error: CalendarPermissionError())
     break
   case .notDetermined:
-    store.requestAccess(to: .event, completion: { (granted, error) in
-      if granted {
-        handleAuthorized(store: store, semaphore: semaphore)
-      } else {
-        handleDenied()
-      }
-    })
+    requestCalendarAccess(store: store)
     break
   default:
     print("Unknown state. Could not retrieve calendar information")
