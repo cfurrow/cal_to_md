@@ -10,6 +10,8 @@
 import EventKit
 import Foundation
 
+class CalendarPermissionError: Error { }
+
 let semaphore = DispatchSemaphore(value: 1)
 
 defer {
