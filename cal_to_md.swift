@@ -20,38 +20,31 @@ defer {
 
 let store = EKEventStore()
 
-class BaseFormatter {
-  var events: [EKEvent] = []
-  var output : String
-
-  init(events: [EKEvent]) {
-    self.events = events
-    self.output = ""
-  }
-
-  func buildDateFormatter() -> DateFormatter {
+class DateTimeHelper {
+  class func buildDateFormatter() -> DateFormatter {
     let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "yyyy-MM-dd"
     return dateFormatter;
   }
 
-  func buildTimeFormatter() -> DateFormatter {
+  class func buildTimeFormatter() -> DateFormatter {
     let timeFormatter = DateFormatter()
     timeFormatter.dateFormat = "hh:mm aa"
     return timeFormatter;
   }
 
-  func todaysDate() -> String {
+  class func todaysDate() -> String {
     let date = Date()
     let dateFormatter = buildDateFormatter()
     return dateFormatter.string(from: date);
   }
+}
 
+class EventHelper {
   // Remove some common characters from the event description to allow for file creation.
   // For example, if an event title is "1:1 Carl<>Frank" the sanitizer will remove ':', '<' and '>'
   // and the output will be "11 CarlFrank", and this is a valid filename that can be created
   // for the event in an app like Obsidian, etc.
-  func sanitizeEventTitle(event:EKEvent) -> String {
     return event.title!
         .replacingOccurrences(of: "FW: ", with: "")
         .replacingOccurrences(of: ":", with: "")
@@ -61,6 +54,19 @@ class BaseFormatter {
         .replacingOccurrences(of: "*", with: "")
         .replacingOccurrences(of: "/", with: "-")
   }
+  class func toId(event: EKEvent) -> String {
+    let dateFormatter = DateTimeHelper.buildDateFormatter()
+    let timeFormatter = DateTimeHelper.buildTimeFormatter()
+    let date = dateFormatter.string(from: event.startDate)
+    let start = timeFormatter.string(from: event.startDate)
+    let end = timeFormatter.string(from: event.endDate)
+    let title = EventHelper.sanitizeEventTitle(event: event)
+    let eventName = "\(date) - \(title)"
+
+    return "`\(start) - \(end)` \(eventName)"
+  }
+}
+
 
   func buildEventDescription(event:EKEvent) -> String {
     let surroundEventNameWithWikiLink = ProcessInfo.processInfo.environment["WIKI_LINK"]
