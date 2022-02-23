@@ -130,7 +130,7 @@ class GanttFormatter : BaseFormatter {
     """
   }
   override func footer() -> String {
-    return "\n```"
+    return "```"
   }
 
   override func format(event: EKEvent) -> String {
