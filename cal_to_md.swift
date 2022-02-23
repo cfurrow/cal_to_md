@@ -45,6 +45,7 @@ class EventHelper {
   // For example, if an event title is "1:1 Carl<>Frank" the sanitizer will remove ':', '<' and '>'
   // and the output will be "11 CarlFrank", and this is a valid filename that can be created
   // for the event in an app like Obsidian, etc.
+  class func sanitizeEventTitle(event:EKEvent) -> String {
     return event.title!
         .replacingOccurrences(of: "FW: ", with: "")
         .replacingOccurrences(of: ":", with: "")
@@ -67,16 +68,24 @@ class EventHelper {
   }
 }
 
+class BaseFormatter {
+  var events: [EKEvent] = []
+  var output : String
+
+  init(events: [EKEvent]) {
+    self.events = events
+    self.output = ""
+  }
 
   func buildEventDescription(event:EKEvent) -> String {
     let surroundEventNameWithWikiLink = ProcessInfo.processInfo.environment["WIKI_LINK"]
 
-    let dateFormatter = buildDateFormatter()
-    let timeFormatter = buildTimeFormatter()
+    let dateFormatter = DateTimeHelper.buildDateFormatter()
+    let timeFormatter = DateTimeHelper.buildTimeFormatter()
     let date = dateFormatter.string(from: event.startDate)
     let start = timeFormatter.string(from: event.startDate)
     let end = timeFormatter.string(from: event.endDate)
-    let title = sanitizeEventTitle(event: event)
+    let title = EventHelper.sanitizeEventTitle(event: event)
     
     var eventName = "\(date) - \(title)"
     if(surroundEventNameWithWikiLink?.lowercased() == "true") {
@@ -137,8 +146,8 @@ class GanttFormatter : BaseFormatter {
     if( event.isAllDay ) {
       return "";
     }
-    let eventTitle = sanitizeEventTitle(event: event)
-    let timeFormatter = buildTimeFormatter()
+    let eventTitle = EventHelper.sanitizeEventTitle(event: event)
+    let timeFormatter = DateTimeHelper.buildTimeFormatter()
 
     let start = timeFormatter.string(from: event.startDate)
     let end = timeFormatter.string(from: event.endDate)
