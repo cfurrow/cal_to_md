@@ -185,7 +185,11 @@ func handleAuthorized(store:EKEventStore, semaphore:DispatchSemaphore) {
     if eventsSet.count == 0 {
       print("No events today")
     } else {
-      let eventsArray = Array(eventsSet.values)
+      var eventsArray = Array(eventsSet.values)
+      // TODO: sort events by start time.
+      eventsArray.sort { (event1, event2) -> Bool in
+        return event1.startDate < event2.startDate
+      }
       let ganttFormatter = GanttFormatter(events: eventsArray)
       print(ganttFormatter.build())
       let listFormatter = ListFormatter(events: eventsArray)
