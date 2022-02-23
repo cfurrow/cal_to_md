@@ -41,6 +41,12 @@ calendar.png from [commons.wikimedia.org](https://commons.wikimedia.org/wiki/Fil
   2. You can tag me in the PR description
 
 # Changes
+
+## v1.4.1
+Fix bugs #10 and #11
+
+## v1.4.0
+Add gantt chart
 ## v1.3.0
 Add alfred build script
 
