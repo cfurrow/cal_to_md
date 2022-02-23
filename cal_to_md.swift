@@ -10,6 +10,8 @@
 import EventKit
 import Foundation
 
+class CalendarPermissionError: Error { }
+
 let semaphore = DispatchSemaphore(value: 1)
 
 defer {
@@ -17,6 +19,54 @@ defer {
 }
 
 let store = EKEventStore()
+
+class DateTimeHelper {
+  class func buildDateFormatter() -> DateFormatter {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd"
+    return dateFormatter;
+  }
+
+  class func buildTimeFormatter() -> DateFormatter {
+    let timeFormatter = DateFormatter()
+    timeFormatter.dateFormat = "hh:mm aa"
+    return timeFormatter;
+  }
+
+  class func todaysDate() -> String {
+    let date = Date()
+    let dateFormatter = buildDateFormatter()
+    return dateFormatter.string(from: date);
+  }
+}
+
+class EventHelper {
+  // Remove some common characters from the event description to allow for file creation.
+  // For example, if an event title is "1:1 Carl<>Frank" the sanitizer will remove ':', '<' and '>'
+  // and the output will be "11 CarlFrank", and this is a valid filename that can be created
+  // for the event in an app like Obsidian, etc.
+  class func sanitizeEventTitle(event:EKEvent) -> String {
+    return event.title!
+        .replacingOccurrences(of: "FW: ", with: "")
+        .replacingOccurrences(of: ":", with: "")
+        .replacingOccurrences(of: "&", with: "and")
+        .replacingOccurrences(of: "<", with: "")
+        .replacingOccurrences(of: ">", with: "")
+        .replacingOccurrences(of: "*", with: "")
+        .replacingOccurrences(of: "/", with: "-")
+  }
+  class func toId(event: EKEvent) -> String {
+    let dateFormatter = DateTimeHelper.buildDateFormatter()
+    let timeFormatter = DateTimeHelper.buildTimeFormatter()
+    let date = dateFormatter.string(from: event.startDate)
+    let start = timeFormatter.string(from: event.startDate)
+    let end = timeFormatter.string(from: event.endDate)
+    let title = EventHelper.sanitizeEventTitle(event: event)
+    let eventName = "\(date) - \(title)"
+
+    return "`\(start) - \(end)` \(eventName)"
+  }
+}
 
 class BaseFormatter {
   var events: [EKEvent] = []
@@ -27,48 +77,15 @@ class BaseFormatter {
     self.output = ""
   }
 
-  func buildDateFormatter() -> DateFormatter {
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "yyyy-MM-dd"
-    return dateFormatter;
-  }
-
-  func buildTimeFormatter() -> DateFormatter {
-    let timeFormatter = DateFormatter()
-    timeFormatter.dateFormat = "hh:mm aa"
-    return timeFormatter;
-  }
-
-  func todaysDate() -> String {
-    let date = Date()
-    let dateFormatter = buildDateFormatter()
-    return dateFormatter.string(from: date);
-  }
-
-  // Remove some common characters from the event description to allow for file creation.
-  // For example, if an event title is "1:1 Carl<>Frank" the sanitizer will remove ':', '<' and '>'
-  // and the output will be "11 CarlFrank", and this is a valid filename that can be created
-  // for the event in an app like Obsidian, etc.
-  func sanitizeEventTitle(event:EKEvent) -> String {
-    return event.title!
-        .replacingOccurrences(of: "FW: ", with: "")
-        .replacingOccurrences(of: ":", with: "")
-        .replacingOccurrences(of: "&", with: "and")
-        .replacingOccurrences(of: "<", with: "")
-        .replacingOccurrences(of: ">", with: "")
-        .replacingOccurrences(of: "*", with: "")
-        .replacingOccurrences(of: "/", with: "-")
-  }
-
   func buildEventDescription(event:EKEvent) -> String {
     let surroundEventNameWithWikiLink = ProcessInfo.processInfo.environment["WIKI_LINK"]
 
-    let dateFormatter = buildDateFormatter()
-    let timeFormatter = buildTimeFormatter()
+    let dateFormatter = DateTimeHelper.buildDateFormatter()
+    let timeFormatter = DateTimeHelper.buildTimeFormatter()
     let date = dateFormatter.string(from: event.startDate)
     let start = timeFormatter.string(from: event.startDate)
     let end = timeFormatter.string(from: event.endDate)
-    let title = sanitizeEventTitle(event: event)
+    let title = EventHelper.sanitizeEventTitle(event: event)
     
     var eventName = "\(date) - \(title)"
     if(surroundEventNameWithWikiLink?.lowercased() == "true") {
@@ -122,15 +139,15 @@ class GanttFormatter : BaseFormatter {
     """
   }
   override func footer() -> String {
-    return "\n```"
+    return "```"
   }
 
   override func format(event: EKEvent) -> String {
     if( event.isAllDay ) {
       return "";
     }
-    let eventTitle = sanitizeEventTitle(event: event)
-    let timeFormatter = buildTimeFormatter()
+    let eventTitle = EventHelper.sanitizeEventTitle(event: event)
+    let timeFormatter = DateTimeHelper.buildTimeFormatter()
 
     let start = timeFormatter.string(from: event.startDate)
     let end = timeFormatter.string(from: event.endDate)
@@ -143,29 +160,39 @@ class GanttFormatter : BaseFormatter {
 }
 
 // TODO: how can we give a more helpful message here? What can a user do to fix this?
-func handleDenied() {
-  print("No access to calendars")
+func handleDenied(error: Error?) {
+  print("No access to calendars.")
+  if error != nil {
+    print(error!.localizedDescription)
+  }
+  exit(1);
 }
 
 func handleAuthorized(store:EKEventStore, semaphore:DispatchSemaphore) {
   store.requestAccess(to: .event, completion: { (success, error) -> Void in
-    var eventsSet: Set = Set<EKEvent>()
+    var eventsSet: [String:EKEvent] = [:]
     let events = collectEvents(store: store)
     // Do not print duplicates
     for event in events {
-      if !eventsSet.contains(event) {
-        eventsSet.insert(event)
+      let eventId = EventHelper.toId(event: event)
+      if eventsSet[eventId] == nil {
+        eventsSet[eventId] = event
       }
     }
 
-    // printTodaysDate()
+    // printTodaysDate() // TODO: make configurable, use DateTimeHelper.todaysDate()
     
     if eventsSet.count == 0 {
       print("No events today")
     } else {
-      let ganttFormatter = GanttFormatter(events: Array(eventsSet))
+      var eventsArray = Array(eventsSet.values)
+      // TODO: sort events by start time.
+      eventsArray.sort { (event1, event2) -> Bool in
+        return event1.startDate < event2.startDate
+      }
+      let ganttFormatter = GanttFormatter(events: eventsArray)
       print(ganttFormatter.build())
-      let listFormatter = ListFormatter(events: Array(eventsSet))
+      let listFormatter = ListFormatter(events: eventsArray)
       print(listFormatter.build())
     }
 
@@ -190,21 +217,26 @@ func collectEvents(store:EKEventStore) -> [EKEvent] {
   return store.events(matching: predicate)
 }
 
+func requestCalendarAccess(store: EKEventStore) {
+  print("Requesting access....")
+  store.requestAccess(to: .event, completion: { (granted, error) in
+    if granted {
+      handleAuthorized(store: store, semaphore: semaphore)
+    } else {
+      handleDenied(error: error)
+    }
+  })
+}
+
 switch EKEventStore.authorizationStatus(for: .event) {
   case .authorized:
     handleAuthorized(store: store, semaphore: semaphore)
     break
   case .denied:
-    handleDenied()
+    handleDenied(error: CalendarPermissionError())
     break
   case .notDetermined:
-    store.requestAccess(to: .event, completion: { (granted, error) in
-      if granted {
-        handleAuthorized(store: store, semaphore: semaphore)
-      } else {
-        handleDenied()
-      }
-    })
+    requestCalendarAccess(store: store)
     break
   default:
     print("Unknown state. Could not retrieve calendar information")
