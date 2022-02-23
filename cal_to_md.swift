@@ -170,23 +170,25 @@ func handleDenied(error: Error?) {
 
 func handleAuthorized(store:EKEventStore, semaphore:DispatchSemaphore) {
   store.requestAccess(to: .event, completion: { (success, error) -> Void in
-    var eventsSet: Set = Set<EKEvent>()
+    var eventsSet: [String:EKEvent] = [:]
     let events = collectEvents(store: store)
     // Do not print duplicates
     for event in events {
-      if !eventsSet.contains(event) {
-        eventsSet.insert(event)
+      let eventId = EventHelper.toId(event: event)
+      if eventsSet[eventId] == nil {
+        eventsSet[eventId] = event
       }
     }
 
-    // printTodaysDate()
+    // printTodaysDate() // TODO: make configurable, use DateTimeHelper.todaysDate()
     
     if eventsSet.count == 0 {
       print("No events today")
     } else {
-      let ganttFormatter = GanttFormatter(events: Array(eventsSet))
+      let eventsArray = Array(eventsSet.values)
+      let ganttFormatter = GanttFormatter(events: eventsArray)
       print(ganttFormatter.build())
-      let listFormatter = ListFormatter(events: Array(eventsSet))
+      let listFormatter = ListFormatter(events: eventsArray)
       print(listFormatter.build())
     }
 
