@@ -141,8 +141,6 @@
 	<dict>
 		<key>WIKI_LINK</key>
 		<string>false</string>
-	</dict>
-	<dict>
 		<key>GANTT_CHART</key>
 		<string>false</string>
 	</dict>
