@@ -6,7 +6,14 @@ My primary use case is to output this list once a day and put them in my markdow
 ## Usage
 
 ```shell
+# Output default
 ./cal_to_md.swift
+# Output with event names surrounded in wiki-link brackets
+WIKI_LINK=true ./cal_to_md.swift
+# Output with a mermaidjs gantt chart above the list of events
+GANTT_CHART=true ./cal_to_md.swift
+# Output the gantt chart, as well as use wiki-links to surround events in the list
+WIKI_LINK=true GANTT_CHART=true ./cal_to_md.swift
 ```
 
 Example Output:
@@ -22,6 +29,7 @@ Example Output:
 
 ## Alfred Workflow Configuration
 WIKI_LINK [true|false] - Surround event names in wikilink-style [[ and ]]
+GANTT_CHART [true|false] - Turn the gannt chart on or off
 
 ## TODO
 - How to make asking for permissions easier for new users.
@@ -42,6 +50,8 @@ calendar.png from [commons.wikimedia.org](https://commons.wikimedia.org/wiki/Fil
 
 # Changes
 
+## v1.5.0
+Added GANTT_CHART option to script, and alfred workflow. Can turn the gantt chart on/off.
 ## v1.4.1
 Fix bugs #10 and #11
 
