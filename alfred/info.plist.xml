@@ -142,6 +142,10 @@
 		<key>WIKI_LINK</key>
 		<string>false</string>
 	</dict>
+	<dict>
+		<key>GANTT_CHART</key>
+		<string>false</string>
+	</dict>
 	<key>version</key>
 	<string>{{version}}</string>
 	<key>webaddress</key>

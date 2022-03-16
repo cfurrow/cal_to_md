@@ -10,9 +10,22 @@
 import EventKit
 import Foundation
 
+class Settings {
+  var useWikiLinks: Bool
+  var addGanttChart: Bool
+
+  init(useWikiLinks: Bool, addGanttChart: Bool) {
+    self.useWikiLinks = useWikiLinks
+    self.addGanttChart = addGanttChart
+  }
+}
 class CalendarPermissionError: Error { }
 
 let semaphore = DispatchSemaphore(value: 1)
+let surroundEventNameWithWikiLink = ProcessInfo.processInfo.environment["WIKI_LINK"]?.lowercased() == "true"
+let addGanttChart = ProcessInfo.processInfo.environment["GANTT_CHART"]?.lowercased() == "true"
+let settings = Settings(useWikiLinks: surroundEventNameWithWikiLink, addGanttChart: addGanttChart)
+let defaultSettings = Settings(useWikiLinks: false, addGanttChart: false)
 
 defer {
   semaphore.wait()
@@ -69,17 +82,21 @@ class EventHelper {
 }
 
 class BaseFormatter {
+  var settings: Settings
   var events: [EKEvent] = []
   var output : String
 
-  init(events: [EKEvent]) {
+  init(events: [EKEvent], settings: Settings?) {
+    // value of optional type 'Settings?' must be unwrapped to a value of type 'Settings'
+    // if let ... is a way to safely unwrap the optional value.
+    // Or you can use the nil-coalescing operator (??) to provide a default value if the optional value is nil.
+    // self.settings = settings ?? defaultSettings
+    self.settings = settings ?? defaultSettings
     self.events = events
     self.output = ""
   }
 
   func buildEventDescription(event:EKEvent) -> String {
-    let surroundEventNameWithWikiLink = ProcessInfo.processInfo.environment["WIKI_LINK"]
-
     let dateFormatter = DateTimeHelper.buildDateFormatter()
     let timeFormatter = DateTimeHelper.buildTimeFormatter()
     let date = dateFormatter.string(from: event.startDate)
@@ -88,7 +105,7 @@ class BaseFormatter {
     let title = EventHelper.sanitizeEventTitle(event: event)
     
     var eventName = "\(date) - \(title)"
-    if(surroundEventNameWithWikiLink?.lowercased() == "true") {
+    if(self.settings.useWikiLinks) {
       eventName = "[[\(eventName)]]"
     }
 
@@ -190,9 +207,11 @@ func handleAuthorized(store:EKEventStore, semaphore:DispatchSemaphore) {
       eventsArray.sort { (event1, event2) -> Bool in
         return event1.startDate < event2.startDate
       }
-      let ganttFormatter = GanttFormatter(events: eventsArray)
-      print(ganttFormatter.build())
-      let listFormatter = ListFormatter(events: eventsArray)
+      if (settings.addGanttChart) {
+        let ganttFormatter = GanttFormatter(events: eventsArray, settings: settings)
+        print(ganttFormatter.build())
+      }
+      let listFormatter = ListFormatter(events: eventsArray, settings: settings)
       print(listFormatter.build())
     }
 
